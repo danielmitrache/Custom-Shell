@@ -3,10 +3,12 @@
 Custom Linux Shell written in C.<br />
 To run
 ```
+
 git clone <repo_url>
 cd <project_directory>
 gcc custom_shell.c -o custom_shell
 ./custom_shell
+
 ```
 <br />
 List of built-in commands:
@@ -21,12 +23,12 @@ List of built-in commands:
  <li>exit : exit out of the shell</li>
 </ul>
 Example of usage:
-```
->>> goto /home/user/Documents
->>> cf file1.txt file2.txt
->>> yap Hello, world! #=> file1.txt
->>> look file1.txt
->>> rf file2.txt
->>> back
->>> exit
-```
+<p>
+ >>> goto /home/user/Documents
+ >>> cf file1.txt file2.txt
+ >>> yap Hello, world! #=> file1.txt
+ >>> look file1.txt
+ >>> rf file2.txt
+ >>> back
+ >>> exit
+</p>
