@@ -18,12 +18,12 @@ List of built-in commands:
  <li>back : go back to the last working directory</li>
  <li>cf : create file</li>
  <li>rf : remove file</li>
- <li>yap : echo to stdout or file</li>
+ <li>yap : echo to console or file</li>
  <li>look : see file contents</li>
  <li>exit : exit out of the shell</li>
 </ul>
 Example of usage:
-<ul style="list-style-type:none">
+<ul style="list-style-type:none;">
  <li> >>> goto /home/user/Documents</li>
  <li> >>> cf file1.txt file2.txt</li>
  <li> >>> yap Hello, world! #=> file1.txt</li>
