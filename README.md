@@ -23,12 +23,12 @@ List of built-in commands:
  <li>exit : exit out of the shell</li>
 </ul>
 Example of usage:
-<p>
- >>> goto /home/user/Documents
- >>> cf file1.txt file2.txt
- >>> yap Hello, world! #=> file1.txt
- >>> look file1.txt
- >>> rf file2.txt
- >>> back
- >>> exit
-</p>
+<ul style="list-style-type:none">
+ <li> >>> goto /home/user/Documents</li>
+ <li> >>> cf file1.txt file2.txt</li>
+ <li> >>> yap Hello, world! #=> file1.txt</li>
+ <li> >>> look file1.txt</li>
+ <li> >>> rf file2.txt</li>
+ <li> >>> back</li>
+ <li> >>> exit</li>
+</ul>
