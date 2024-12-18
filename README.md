@@ -10,15 +10,16 @@ gcc custom_shell.c -o custom_shell
 ```
 <br />
 List of built-in commands:
- - goto : go to directory
- - di : directory items (files and directories)
- - back : go back to the last working directory
- - cf : create file
- - rf : remove file
- - yap : echo to stdout or file
- - look : see file contents
- - exit : exit out of the shell
-<br />
+<ul>
+ <li>goto : go to directory</li>
+ <li>di : directory items (files and directories)</li>
+ <li>back : go back to the last working directory</li>
+ <li>cf : create file</li>
+ <li>rf : remove file</li>
+ <li>yap : echo to stdout or file</li>
+ <li>look : see file contents</li>
+ <li>exit : exit out of the shell</li>
+</ul>
 Example of usage:
 ```
 >>> goto /home/user/Documents
