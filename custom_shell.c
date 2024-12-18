@@ -258,16 +258,20 @@ void vsh_loop() {
     } while (status_code == 0);
 }
 
-void vsh_init() {
+int vsh_init() {
     if(getcwd(working_directory, sizeof(working_directory)) == NULL){
         perror("vsh");
-        return;
+        return 1;
     }
     strcpy(last_working_directory, working_directory);
+    return 0;
 }
 
 int main(void) {
-    vsh_init();
+    if(vsh_init() != 0){
+        perror("Error initializing!");
+        return 1;
+    }
     vsh_loop();
     return 0;
 }
