@@ -7,31 +7,42 @@
 #include <sys/vfs.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <sys/stat.h> 
 
 #define BUFFER_SIZE 1024
-#define SUCCES_EXIT 0
-#define FAILURE_EXIT 1
 #define VSH_DELIMITERS " \t\r\a\n"
-#define NUM_COMMS 4
+#define NUM_COMMS 8
 #define MAX_PATH_SIZE 256
 
 int vsh_goto(char **args);
 int vsh_exit(char **args);
 int vsh_di(char **args);
 int vsh_back(char **args);
+int vsh_cf(char **args);
+int vsh_rf(char **args);
+int vsh_yap(char **args);
+int vsh_look(char **args);
 
 char *builtin_comms[] = {
     "goto",
     "exit",
     "di",
-    "back"
+    "back",
+    "cf",
+    "rf",
+    "yap",
+    "look"
 };
 
 int (*builtin_func[]) (char **) = {
     &vsh_goto,
     &vsh_exit,
     &vsh_di,
-    &vsh_back
+    &vsh_back,
+    &vsh_cf,
+    &vsh_rf,
+    &vsh_yap,
+    &vsh_look
 };
 
 char last_working_directory[MAX_PATH_SIZE], working_directory[MAX_PATH_SIZE];
@@ -64,27 +75,6 @@ int read_command(char *command) {
     return 0;
 }
 
-int vsh_launch(char **args) {
-    pid_t pid, wpid;
-    int status;
-
-    pid = fork();
-    if(pid == 0) {
-        if(execvp(args[0], args) == -1) {
-            perror("vsh");
-        }
-        exit(FAILURE_EXIT);
-    }
-    else if(pid < 0) {
-        perror("vsh");
-    }
-    else {
-        do {
-            wpid = waitpid(pid, &status, WUNTRACED);
-        } while(!WIFEXITED(status) && !WIFSIGNALED(status));
-    }
-}
-
 int get_num_args(char **args) {
     int num_args = 0;
     while(args[num_args ++]);
@@ -94,9 +84,9 @@ int get_num_args(char **args) {
 int vsh_goto(char **args) {
     int num_args = get_num_args(args);
     strcpy(last_working_directory, working_directory);
-    printf("%s\n", last_working_directory);
+
     if(num_args != 2) {
-        fprintf(stderr, "Syntax: goto <path>");
+        fprintf(stderr, "Syntax: goto <path>\n");
         return 1;
     }
     else if(chdir(args[1]) != 0) {
@@ -129,7 +119,10 @@ int vsh_di(char **args) {
 
     struct dirent *entry;
     while((entry = readdir(dir)) != NULL) {
-        printf("%s\n", entry -> d_name);
+        char *name = entry -> d_name;
+        if(name[0] == '.')
+            continue;
+        printf("%s\n", name);
     }
     closedir(dir);
     return 0;
@@ -148,6 +141,36 @@ int vsh_back(char **args) {
     return 0;
 }
 
+int vsh_cf(char **args) {
+    int num_args = get_num_args(args);
+    if(num_args < 2) {
+        printf("Syntax: cf <file1> ...");
+        return 1;
+    }
+    for(int i = 1; i < num_args; i ++) {
+        char *filename = args[i];
+        open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+    }
+    return 0;
+}
+
+int vsh_rf(char **args) {
+    int num_args = get_num_args(args);
+    if (num_args < 2) {
+        printf("Syntax: rf <file1> ...\n");
+        return 1;
+    }
+    for (int i = 1; i < num_args; i++) {
+        char *filename = args[i];
+        if (unlink(filename) == -1) {
+            perror("vsh");
+        } else {
+            printf("File '%s' removed successfully.\n", filename);
+        }
+    }
+    return 0;
+}
+
 int vsh_execute(char **args) {
     if(args[0] == NULL)
         return 1;
@@ -157,8 +180,70 @@ int vsh_execute(char **args) {
             return (*builtin_func[i]) (args);
         }
     }
+    printf("Command not found!\n");
+    return 0;
+}
 
-    return vsh_launch(args);
+int vsh_yap(char **args) {
+    char *text, *filename;
+    text = malloc(BUFFER_SIZE * sizeof(char));
+    int print_to_stdout = 1;
+    for(int i = 1; args[i]; i ++) {
+        if(strcmp(args[i], "#=>") == 0) {
+            if(!args[i + 1] || args[i + 2]) {
+                printf("Syntax: yap <message> #=> <file>");
+                return 1;
+            }
+            filename = args[++ i];
+            print_to_stdout = 0;
+            break;
+        }
+        strcat(text, args[i]);
+        strcat(text, " ");
+    }
+    text[strlen(text) - 1] = '\n';
+    if(print_to_stdout) {
+        printf("%s", text);
+    }
+    else {
+        int fd = open(filename, O_RDWR | O_APPEND | O_CREAT);
+        if (fd < 0) {
+            perror("Error opening the file");
+            return 1;
+        }
+        if(write(fd, text, strlen(text)) < 0){
+            perror("Error writing to file");
+            return 1;
+        }
+        close(fd);
+    }
+    free(text);
+    return 0;
+}
+
+int vsh_look(char **args) {
+    int num_args = get_num_args(args);
+    if(num_args != 2){
+        printf("Syntax: look <file>");
+        return 1;
+    }
+    int fd = open(args[1], O_RDONLY);
+    if(fd < 0) {
+        perror("Error opening the file");
+        return 1;
+    }
+    struct stat stbuf;
+    stat(args[1], &stbuf);
+    int filesize = stbuf.st_size;
+    char *buffer = malloc(filesize * sizeof(char));
+    if(read(fd, buffer, filesize) < 0) {
+        perror("Error reading from file");
+        return 1;
+    }
+    printf("%s", buffer);
+    free(buffer);
+    close(fd);
+    return 0;
 }
 
 void vsh_loop() {
@@ -173,11 +258,16 @@ void vsh_loop() {
     } while (status_code == 0);
 }
 
-int main(void) {
+void vsh_init() {
     if(getcwd(working_directory, sizeof(working_directory)) == NULL){
         perror("vsh");
-        return 1;
+        return;
     }
+    strcpy(last_working_directory, working_directory);
+}
+
+int main(void) {
+    vsh_init();
     vsh_loop();
-    return SUCCES_EXIT;
+    return 0;
 }
